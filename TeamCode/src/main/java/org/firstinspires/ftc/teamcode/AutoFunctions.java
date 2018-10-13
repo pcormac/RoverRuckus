@@ -88,10 +88,10 @@ public class AutoFunctions extends LinearOpMode {
     DcMotor leftMotor = null;
     DcMotor rightMotor = null;
     DcMotor elevator = null;
-    DcMotor escalator = null;
-    Servo servoGrabberLeft = null;
-    Servo servoGrabberRight = null;
-    Servo servoJewel = null;
+    //DcMotor escalator = null;
+    Servo tail = null;
+    Servo gate = null;
+    Servo flip = null;
 
     //TouchSensor escalatorTouch = null;
     DigitalChannel elevatorTouch = null;
@@ -111,9 +111,12 @@ public class AutoFunctions extends LinearOpMode {
     public float robotY = 0;
     public float robotAngle = 0;
 
-    double jewelUp = .95;
-    double jewelDown = .38;
-
+    double tail_UP     = .75;
+    double tail_DOWN   = -.5;
+    double gate_CLOSED = -1;
+    double gate_OPEN   = .5;
+    double flip_UP     = -1;
+    double flip_DOWN   = .95;
 
     String color;
     String vMark;
@@ -125,18 +128,17 @@ public class AutoFunctions extends LinearOpMode {
         leftMotor = hardwareMap.dcMotor.get("leftMotor");
         rightMotor = hardwareMap.dcMotor.get("rightMotor");
         elevator = hardwareMap.dcMotor.get("elevator");
-        escalator = hardwareMap.dcMotor.get("escalator");
+        //escalator = hardwareMap.dcMotor.get("escalator");
 
-        leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        rightMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
         // get servos
-        servoGrabberLeft = hardwareMap.servo.get("servoGrabberLeft");
-        servoGrabberRight = hardwareMap.servo.get("servoGrabberRight");
-        servoJewel = hardwareMap.servo.get("servoJewel");
+        tail = hardwareMap.servo.get("tail");
+        gate = hardwareMap.servo.get("gate");
+        flip = hardwareMap.servo.get("flip");
 
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -146,7 +148,7 @@ public class AutoFunctions extends LinearOpMode {
         ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
         //escalatorTouch = hardwareMap.touchSensor.get("escalatorTouch");
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
-        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
 
         elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
 
@@ -178,6 +180,7 @@ public class AutoFunctions extends LinearOpMode {
             }
         });
     }
+    /*
     public void openGrabbers() throws InterruptedException {
         servoGrabberLeft.setPosition(.45);
         servoGrabberRight.setPosition(.50);
@@ -186,6 +189,7 @@ public class AutoFunctions extends LinearOpMode {
         servoGrabberLeft.setPosition(.65);
         servoGrabberRight.setPosition(.30);
     }
+    */
     public void getColor() throws InterruptedException {
         boolean found = false;
 
@@ -240,6 +244,7 @@ public class AutoFunctions extends LinearOpMode {
             sleep(3000);
         }
     }
+    /*
     public void hitColor(String teamColor) throws InterruptedException {
         if (teamColor.equals("Blue") || teamColor.equals("blue")) {
             if (color.equals("Red")) {
@@ -271,15 +276,14 @@ public class AutoFunctions extends LinearOpMode {
             }
         }
     }
+    */
     public void elevatorDown() throws InterruptedException {
-        closeGrabbers();
         sleep(100);
         elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         while (opModeIsActive() && !isStopRequested() && elevatorTouch.getState()) {
             elevator.setPower(-1);
             idle();
         }
-        closeGrabbers();
         elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
     }
@@ -555,14 +559,15 @@ public class AutoFunctions extends LinearOpMode {
         DcMotor rightMotor = null;
         DcMotor elevator = null;
         DcMotor escalator = null;
-        Servo servoGrabberLeft = null;
-        Servo servoGrabberRight = null;
-        Servo servoJewel = null;
+
+        Servo tail = null;
+        Servo gate = null;
+        Servo flip = null;
 
         //TouchSensor escalatorTouch = null;
         DigitalChannel elevatorTouch = null;
         //OpticalDistanceSensor odsSensor;
-        ColorSensor colorSensor = null;
+        //ColorSensor colorSensor = null;
         //OpticalDistanceSensor sharpIR = null;
         //ModernRoboticsI2cRangeSensor ultra = null;
 
@@ -594,19 +599,19 @@ public class AutoFunctions extends LinearOpMode {
         rightMotor = hardwareMap.dcMotor.get("rightMotor");
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        rightMotor.setDirection(DcMotor.Direction.FORWARD);
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //      Elevator motor
         elevator = hardwareMap.dcMotor.get("elevator");
         //      Escalator motor
-        escalator = hardwareMap.dcMotor.get("escalator");
+        //escalator = hardwareMap.dcMotor.get("escalator");
 
         //      Servo
-        servoGrabberLeft = hardwareMap.servo.get("servoGrabberLeft");
-        servoGrabberRight = hardwareMap.servo.get("servoGrabberRight");
-        servoJewel = hardwareMap.servo.get("servoJewel");
+        tail = hardwareMap.servo.get("tail");
+        gate = hardwareMap.servo.get("gate");
+        flip = hardwareMap.servo.get("flip");
 
         // Sensors
         //     Light sensor
@@ -618,15 +623,13 @@ public class AutoFunctions extends LinearOpMode {
         //     Elevator touch
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
         //     Color sensor
-        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         //     Ir Sensor
         //sharpIR = hardwareMap.opticalDistanceSensor.get("infrared");
 
 
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
-        rightMotor.setDirection(DcMotor.Direction.REVERSE);
-
-
+        rightMotor.setDirection(DcMotor.Direction.FORWARD);
     }
 }

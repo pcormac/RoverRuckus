@@ -19,8 +19,6 @@ public class AutoTestEncoders extends AutoFunctions {
 
         declareMap();
 
-        servoJewel.setPosition(1);
-
         waitForStart();
 
         runForTime(1, 1, 500);

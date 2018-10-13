@@ -61,21 +61,29 @@ public class TeleOp7646 extends OpMode {
     private DcMotor leftMotor = null;
     private DcMotor rightMotor = null;
     private DcMotor elevator = null;
-    private DcMotor escalator = null; // get it?
-    private Servo servoGrabberLeft = null;
-    private Servo servoGrabberRight = null;
-    private Servo servoJewel = null;
+    //private DcMotor escalator = null;
+    private Servo tail = null;
+    private Servo gate = null;
+    private Servo flip = null;
 
-    DigitalChannel elevatorTouch = null;
+    private DigitalChannel elevatorTouch = null;
     //TouchSensor escalatorTouch = null;
-    ColorSensor colorSensor = null;
+    //ColorSensor colorSensor = null;
     //ColorSensor colorSensorCloser = null;
-    ModernRoboticsI2cRangeSensor ultra = null;
+    //ModernRoboticsI2cRangeSensor ultra = null;
 
-    double elevatorPower = 0;
-    double escalatorPower = 0;
+    private double elevatorPower = 0;
+    // double escalatorPower = 0;
 
     String color;
+
+    private double tail_UP     = .75;
+    private double tail_DOWN   = -.5;
+    private double gate_CLOSED = -1;
+    private double gate_OPEN   = .5;
+    private double flip_UP     = -1;
+    private double flip_DOWN   = .95;
+
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -87,19 +95,18 @@ public class TeleOp7646 extends OpMode {
         leftMotor = hardwareMap.dcMotor.get("leftMotor");
         rightMotor = hardwareMap.dcMotor.get("rightMotor");
         elevator = hardwareMap.dcMotor.get("elevator");
-        escalator = hardwareMap.dcMotor.get("escalator");
+        //escalator = hardwareMap.dcMotor.get("escalator");
 
         // get servos
-        servoGrabberLeft = hardwareMap.servo.get("servoGrabberLeft");
-        servoGrabberRight = hardwareMap.servo.get("servoGrabberRight");
-
-        servoJewel = hardwareMap.servo.get("servoJewel");
+        tail = hardwareMap.servo.get("tail");
+        gate = hardwareMap.servo.get("gate");
+        flip = hardwareMap.servo.get("flip");
 
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        rightMotor.setDirection(DcMotor.Direction.FORWARD);
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
         elevator.setDirection(DcMotor.Direction.FORWARD);
-        escalator.setDirection(DcMotor.Direction.REVERSE);
+        //escalator.setDirection(DcMotor.Direction.REVERSE);
 
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -115,17 +122,17 @@ public class TeleOp7646 extends OpMode {
 
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
         //escalatorTouch = hardwareMap.touchSensor.get("escalatorTouch");
-        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         //colorSensorCloser = hardwareMap.get(ColorSensor.class, "colorSensorCloser");
-        ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
+        //ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
 
         elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
 
-        colorSensor.enableLed(true);
+        //colorSensor.enableLed(true);
 
-        servoJewel.setPosition(1);
-        servoGrabberLeft.setPosition(.4);
-        servoGrabberRight.setPosition(.55);
+        tail.setPosition(tail_UP);
+        gate.setPosition(gate_CLOSED);
+        flip.setPosition(flip_DOWN);
 
         telemetry.addData("Status", "Initialized");
     }
@@ -212,28 +219,34 @@ public class TeleOp7646 extends OpMode {
             }
         }
 
-        // Manually grab
-        if (gamepad1.a) {
-            //open
-            servoGrabberLeft.setPosition(.45);
-            servoGrabberRight.setPosition(.50);
-        } else if (gamepad1.b) {
-            //close
-            servoGrabberLeft.setPosition(.65);
-            servoGrabberRight.setPosition(.30);
-        } else if (gamepad1.y) {
-            //relic
-            servoGrabberLeft.setPosition(.75);
-            servoGrabberRight.setPosition(.20);
+        // Drop tail
+        if (gamepad1.y) {
+            // down
+            tail.setPosition(tail_DOWN);
+        } else {
+            // up
+            tail.setPosition(tail_UP);
         }
 
-        // Jewel kicker
-        if (gamepad1.x) {
-            servoJewel.setPosition(.4);
+        // gate
+        if (gamepad1.a) {
+            // open
+            gate.setPosition(gate_OPEN);
+        } else {
+            // close
+            gate.setPosition(gate_CLOSED);
+        }
+
+        // flip
+        if (gamepad1.b) {
+            // flip
+            flip.setPosition(flip_UP);
 
         } else {
-            servoJewel.setPosition(.95);
+            // normal
+            flip.setPosition(flip_DOWN);
         }
+
         //
         //
         //        JOY 2
@@ -251,11 +264,11 @@ public class TeleOp7646 extends OpMode {
         }
 
         // escalator
-        escalatorPower = -gamepad2.left_stick_x;
-        escalator.setPower(escalatorPower);
+        // escalatorPower = -gamepad2.left_stick_x;
+        // escalator.setPower(escalatorPower);
 
 
-
+        /*
         if ((colorSensor.red() > colorSensor.blue()) && (colorSensor.red() > colorSensor.alpha())) {
             color = "Red";
         }
@@ -265,6 +278,7 @@ public class TeleOp7646 extends OpMode {
         else {
             color = "Alpha";
         }
+        */
 
         // end of code, update telemetry
         telemetry.addData("Right", gamepad1.right_stick_y);
@@ -275,8 +289,8 @@ public class TeleOp7646 extends OpMode {
         telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
         telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
         telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
-        telemetry.addData("Color", color);
-        telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
+        //telemetry.addData("Color", color);
+        //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
 
         telemetry.update();
     }

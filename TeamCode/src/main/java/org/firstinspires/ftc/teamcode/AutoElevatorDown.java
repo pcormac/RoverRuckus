@@ -36,15 +36,10 @@ public class AutoElevatorDown extends AutoFunctions {
 
         waitForStart();
 
-        servoGrabberLeft.setPosition(.6);
-        servoGrabberRight.setPosition(.4);
-
         elevatorDown();
 
         elevator.setPower(0);
 
-        servoGrabberLeft.setPosition(.3);
-        servoGrabberRight.setPosition(.7);
         sleep(250);
 
         telemetry.addData("AutoStatus: ", "Elevator down");
