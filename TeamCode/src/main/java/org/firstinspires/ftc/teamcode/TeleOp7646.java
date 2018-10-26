@@ -67,6 +67,7 @@ public class TeleOp7646 extends OpMode {
     private Servo flip = null;
 
     private DigitalChannel elevatorTouch = null;
+    private DigitalChannel mag = null;
     //TouchSensor escalatorTouch = null;
     //ColorSensor colorSensor = null;
     //ColorSensor colorSensorCloser = null;
@@ -83,7 +84,13 @@ public class TeleOp7646 extends OpMode {
     private double gate_OPEN   = .5;
     private double flip_UP     = -1;
     private double flip_DOWN   = .95;
+    private boolean flipped = false;
 
+    private boolean magStop;
+    private boolean magMove;
+    private boolean magOn;
+    double currTime;
+    double goalTime = 0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -126,6 +133,7 @@ public class TeleOp7646 extends OpMode {
         //colorSensorCloser = hardwareMap.get(ColorSensor.class, "colorSensorCloser");
         //ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
 
+        mag = hardwareMap.get(DigitalChannel.class, "mag");
         elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
 
         //colorSensor.enableLed(true);
@@ -154,8 +162,9 @@ public class TeleOp7646 extends OpMode {
      */
     @Override
     public void loop() {
-        telemetry.addData("Status", "Running: " + runtime.toString());
-
+        telemetry.addData("Status", "Running: " + runtime.toString() + ", " + runtime.seconds());
+        currTime = runtime.seconds();
+        magOn = !mag.getState();
 
         /* Controls
         Game pad 1
@@ -237,32 +246,67 @@ public class TeleOp7646 extends OpMode {
             gate.setPosition(gate_CLOSED);
         }
 
-        // flip
-        if (gamepad1.b) {
-            // flip
-            flip.setPosition(flip_UP);
-
-        } else {
-            // normal
-            flip.setPosition(flip_DOWN);
-        }
-
         //
         //
         //        JOY 2
         //
         //
-        // elevator
-        if (elevatorTouch.getState()) {
-            // elevator
-            elevatorPower = -gamepad2.left_stick_y;
-            elevator.setPower(elevatorPower);
-        }
-        else {
-            elevatorPower = .5;
-            elevator.setPower(elevatorPower);
+
+
+        if (gamepad2.a) {
+            // use mag to go up
+            goalTime = currTime + .5;
+            elevatorPower = 1;
+            magMove = true;
+        } else if (gamepad2.b) {
+            // use mag to go down
+            goalTime = currTime + .5;
+            elevatorPower = -1;
+            magMove = true;
         }
 
+        if (magOn && (currTime > goalTime)) {
+            magMove = false;
+            elevatorPower = 0;
+        }
+
+        // elevator
+        if (Math.abs(gamepad2.left_stick_y) > .25) {
+            elevator.setPower(-gamepad2.left_stick_y);
+        } else if (magMove && elevatorTouch.getState()) {
+            // for ele touch true means that it isn't touched
+            if (currTime < goalTime) {
+                elevator.setPower(elevatorPower);
+            } else if (!magOn){
+                    elevator.setPower(elevatorPower);
+            }
+        } else if (!elevatorTouch.getState()) {
+            magMove = false;
+            elevatorPower = 0;
+            elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            elevator.setPower(.5);
+        } else {
+            elevator.setPower(0);
+        }
+
+        // flip
+        if (gamepad2.y) {
+            // flip
+            flip.setPosition(flip_UP);
+            //flipped = !flipped;
+        } else {
+            flip.setPosition(flip_DOWN);
+        }
+
+        /*
+        if (flipped) {
+            flip.setPosition(flip_UP);
+        } else {
+            flip.setPosition(flip_DOWN);
+        }
+        */
+        
         // escalator
         // escalatorPower = -gamepad2.left_stick_x;
         // escalator.setPower(escalatorPower);
@@ -289,6 +333,7 @@ public class TeleOp7646 extends OpMode {
         telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
         telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
         telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
+        telemetry.addData("Mag", !mag.getState());
         //telemetry.addData("Color", color);
         //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
 

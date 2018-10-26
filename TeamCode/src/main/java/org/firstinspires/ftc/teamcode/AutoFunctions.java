@@ -94,6 +94,7 @@ public class AutoFunctions extends LinearOpMode {
     Servo flip = null;
 
     //TouchSensor escalatorTouch = null;
+    DigitalChannel mag = null;
     DigitalChannel elevatorTouch = null;
     OpticalDistanceSensor odsSensor;
     OpticalDistanceSensor sharpIR = null;
@@ -147,6 +148,7 @@ public class AutoFunctions extends LinearOpMode {
         //odsSensor = hardwareMap.opticalDistanceSensor.get("ods");
         ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
         //escalatorTouch = hardwareMap.touchSensor.get("escalatorTouch");
+        mag = hardwareMap.get(DigitalChannel.class, "mag");
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
         //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
 
@@ -565,6 +567,7 @@ public class AutoFunctions extends LinearOpMode {
         Servo flip = null;
 
         //TouchSensor escalatorTouch = null;
+        DigitalChannel mag = null;
         DigitalChannel elevatorTouch = null;
         //OpticalDistanceSensor odsSensor;
         //ColorSensor colorSensor = null;
@@ -593,6 +596,15 @@ public class AutoFunctions extends LinearOpMode {
         float robotAngle = 0;
 
     }
+    public void spamTelemetry() throws InterruptedException {
+        telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
+        telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
+        telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
+        //telemetry.addData("Color", color);
+        //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
+        telemetry.addData("Mag: ", !mag.getState());
+        telemetry.update();
+    }
     public void declareMap() throws InterruptedException {
         //      Drive motors
         leftMotor = hardwareMap.dcMotor.get("leftMotor");
@@ -620,6 +632,8 @@ public class AutoFunctions extends LinearOpMode {
         //ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
         //     Touch sensor
         //escalatorTouch = hardwareMap.touchSensor.get("touchSensor");
+        //     Magnetic limit sensor
+        mag = hardwareMap.get(DigitalChannel.class, "mag");
         //     Elevator touch
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
         //     Color sensor

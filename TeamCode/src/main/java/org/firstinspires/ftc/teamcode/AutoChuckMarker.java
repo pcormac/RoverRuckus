@@ -24,7 +24,7 @@ public class AutoChuckMarker extends AutoFunctions {
 
         elevator.setPower(0);
 
-        runUsingEncoders(-.5, -.5, 1400);
+        runUsingEncoders(-.5, -.5, 1650);
 
         tail.setPosition(tail_DOWN);
         sleep(500);

@@ -20,13 +20,13 @@ public class AutoChuckCrater extends AutoFunctions {
 
         elevator.setPower(1);
 
-        sleep(250);
+        sleep(500);
 
         elevator.setPower(0);
 
         telemetry.addData("AutoStatus: ", "Starting back up");
         telemetry.update();
-        runUsingEncoders(-.5, -.5, 1400);
+        runUsingEncoders(-.5, -.5, 1650);
 
 
         telemetry.addData("AutoStatus: ", "Dumping marker");
@@ -39,7 +39,7 @@ public class AutoChuckCrater extends AutoFunctions {
         telemetry.addData("AutoStatus: ", "Driving to crater");
         telemetry.update();
         turnSlowUsingEncoders("Left", 300);
-        runUsingEncoders(.5, .5, 1800);
+        runUsingEncoders(.75, .75, 3250);
 
         telemetry.addData("AutoStatus: ", "Done");
         telemetry.update();
