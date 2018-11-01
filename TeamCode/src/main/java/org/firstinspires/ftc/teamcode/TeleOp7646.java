@@ -138,10 +138,6 @@ public class TeleOp7646 extends OpMode {
 
         //colorSensor.enableLed(true);
 
-        tail.setPosition(tail_UP);
-        gate.setPosition(gate_CLOSED);
-        flip.setPosition(flip_DOWN);
-
         telemetry.addData("Status", "Initialized");
     }
 
@@ -154,6 +150,9 @@ public class TeleOp7646 extends OpMode {
 
     @Override
     public void start() {
+        tail.setPosition(tail_UP);
+        gate.setPosition(gate_CLOSED);
+        flip.setPosition(flip_DOWN);
         runtime.reset();
     }
 
@@ -306,7 +305,7 @@ public class TeleOp7646 extends OpMode {
             flip.setPosition(flip_DOWN);
         }
         */
-        
+
         // escalator
         // escalatorPower = -gamepad2.left_stick_x;
         // escalator.setPower(escalatorPower);

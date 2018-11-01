@@ -37,6 +37,9 @@ import android.util.Log;
 import android.view.View;
 
 
+import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.DogeCV;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -79,7 +82,7 @@ import java.text.DecimalFormat;
 
 @Disabled
 @Autonomous(name="AutoFunctions", group="Main")
-public class AutoFunctions extends LinearOpMode {
+public abstract class AutoFunctions extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     /* Declare OpMode members. */
@@ -106,6 +109,7 @@ public class AutoFunctions extends LinearOpMode {
     public static final String TAG = "Vuforia VuMark Sample";
     OpenGLMatrix lastLocation = null;
     VuforiaLocalizer vuforia;
+    boolean vuforiaFound = false;
     public static final String VUFORIA_KEY = "AezNI5P/////AAAAGau6WS2ao0KEr5u8BAb3J9lTKExRB45YfNKMCkXuhNSkvqjxenFuSAeL148drmLgkGK+HFayX4nihmiiQ49o3HHT5j/TBwjrVpktUmGQyOjREYq78kQAS1CuQMYa6PKSTLAID+lK/RvJxZ4pqH6H4LgxQBsKaKqzhMr96hwAE2uKKdf1j3gzOyRl0Gsrqv63QiXfJCeJtM1GcuQziKlWv1y6+BcKa+hi31FxvggkMEHVxh7xQ4yAHUvmxQHINOndIE6C6Ltz+ef+7KhCkwmk/QVTPDUafTSuJMPTSp5RxNIK+L+U4kjEMZOFhYP2ubczRypICjcg93tpP73+xvPHyyDIeSoieWvkDdJXhmcKIhrA"; // Insert your own key here
 
     public float robotX = 0;
@@ -122,42 +126,12 @@ public class AutoFunctions extends LinearOpMode {
     String color;
     String vMark;
 
-    boolean vuforiaFound = false;
+    String gold;
+    boolean goldFound = false;
+    GoldAlignDetector goldDetector;
 
     public void runOpMode() throws InterruptedException {
-        // get motors
-        leftMotor = hardwareMap.dcMotor.get("leftMotor");
-        rightMotor = hardwareMap.dcMotor.get("rightMotor");
-        elevator = hardwareMap.dcMotor.get("elevator");
-        //escalator = hardwareMap.dcMotor.get("escalator");
-
-        leftMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        rightMotor.setDirection(DcMotor.Direction.REVERSE);
-        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // get servos
-        tail = hardwareMap.servo.get("tail");
-        gate = hardwareMap.servo.get("gate");
-        flip = hardwareMap.servo.get("flip");
-
-        // Reverse the motor that runs backwards when connected directly to the battery
-        leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        rightMotor.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-
-        //odsSensor = hardwareMap.opticalDistanceSensor.get("ods");
-        ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
-        //escalatorTouch = hardwareMap.touchSensor.get("escalatorTouch");
-        mag = hardwareMap.get(DigitalChannel.class, "mag");
-        elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
-        //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-
-        elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
-
-        colorSensor.enableLed(true);
-
-        telemetry.addData(">", "Robot Ready.");    //
-        telemetry.update();
+        declareMap();
 
         waitForStart();
 
@@ -182,16 +156,18 @@ public class AutoFunctions extends LinearOpMode {
             }
         });
     }
-    /*
     public void openGrabbers() throws InterruptedException {
+        /*
         servoGrabberLeft.setPosition(.45);
         servoGrabberRight.setPosition(.50);
+        */
     }
     public void closeGrabbers() throws InterruptedException {
+        /*
         servoGrabberLeft.setPosition(.65);
         servoGrabberRight.setPosition(.30);
+        */
     }
-    */
     public void getColor() throws InterruptedException {
         boolean found = false;
 
@@ -246,8 +222,8 @@ public class AutoFunctions extends LinearOpMode {
             sleep(3000);
         }
     }
-    /*
     public void hitColor(String teamColor) throws InterruptedException {
+        /*
         if (teamColor.equals("Blue") || teamColor.equals("blue")) {
             if (color.equals("Red")) {
                 turnSlowUsingEncoders("left", 50);
@@ -277,8 +253,8 @@ public class AutoFunctions extends LinearOpMode {
                 servoJewel.setPosition(jewelUp);
             }
         }
+        */
     }
-    */
     public void elevatorDown() throws InterruptedException {
         sleep(100);
         elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -462,7 +438,7 @@ public class AutoFunctions extends LinearOpMode {
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         VuforiaTrackable relicTemplate = relicTrackables.get(0);
         relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
@@ -506,15 +482,15 @@ public class AutoFunctions extends LinearOpMode {
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
-        VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
-        VuforiaTrackable relicTemplate = relicTrackables.get(0);
-        relicTemplate.setName("relicVuMarkTemplate"); // can help in debugging; otherwise not necessary
+        parameters.cameraMonitorFeedback = VuforiaLocalizer.Parameters.CameraMonitorFeedback.AXES;
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        VuforiaTrackables rover = this.vuforia.loadTrackablesFromAsset("Cube");
+        VuforiaTrackable roverTemplate = rover.get(0);
 
         runtime.reset();
         while (runtime.seconds() < time && opModeIsActive() && !isStopRequested() && !vuforiaFound) {
-            relicTrackables.activate();
-            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+            rover.activate();
+            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(roverTemplate);
             RelicRecoveryVuMark KEY;
             KEY = vuMark;
             if (KEY == RelicRecoveryVuMark.LEFT) {
@@ -555,6 +531,52 @@ public class AutoFunctions extends LinearOpMode {
     String format(OpenGLMatrix transformationMatrix) {
         return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
     }
+    public void spamTelemetry() throws InterruptedException {
+        telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
+        telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
+        telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
+        //telemetry.addData("Color", color);
+        //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
+        telemetry.addData("Mag: ", !mag.getState());
+        telemetry.update();
+    }
+    public void checkDogeCVForTime (double time) {
+        runtime.reset();
+        while (runtime.seconds() < time && opModeIsActive() && !isStopRequested() && !goldFound) {
+            telemetry.addData("Gold X Pos", goldDetector.getXPosition()); // Gold X position.
+            double cameraMiddle = goldDetector.getAdjustedSize().width / 2;
+            // camera is upside down so the highest x val pixel is on the left not the right
+
+            if (Math.abs(goldDetector.getXPosition() - cameraMiddle) < 100) {
+                gold = "Middle";
+                goldFound = true;
+            } else if (goldDetector.getXPosition() < cameraMiddle) {
+                gold = "Right";
+                goldFound = true;
+            } else {
+                gold = "Left";
+                goldFound = true;
+            }
+            telemetry.update();
+        }
+
+        switch (gold) {
+            case "Left":
+                telemetry.addData("Status", "Gold in the middle");
+                break;
+            case "Middle":
+                telemetry.addData("Status", "Gold in the middle");
+                break;
+            case "Right":
+                telemetry.addData("Status", "Gold in the middle");
+                break;
+            default:
+                telemetry.addData("Status", "Gold not found");
+                break;
+        }
+        telemetry.update();
+        sleep(3000);
+    }
     public void declareDevices() throws InterruptedException {
         // Device declarations
         DcMotor leftMotor = null;
@@ -581,7 +603,9 @@ public class AutoFunctions extends LinearOpMode {
         boolean odsTurning;
         String color;
         String vMark;
+        String gold;
         boolean vuforiaFound = false;
+        boolean goldFound = false;
         double jewelUp = .8;
         double jewelDown = .4;
 
@@ -595,15 +619,7 @@ public class AutoFunctions extends LinearOpMode {
         float robotY = 0;
         float robotAngle = 0;
 
-    }
-    public void spamTelemetry() throws InterruptedException {
-        telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
-        telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
-        telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
-        //telemetry.addData("Color", color);
-        //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
-        telemetry.addData("Mag: ", !mag.getState());
-        telemetry.update();
+        GoldAlignDetector goldDetector;
     }
     public void declareMap() throws InterruptedException {
         //      Drive motors
@@ -641,9 +657,26 @@ public class AutoFunctions extends LinearOpMode {
         //     Ir Sensor
         //sharpIR = hardwareMap.opticalDistanceSensor.get("infrared");
 
-
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor.setDirection(DcMotor.Direction.FORWARD);
+
+        goldDetector = new GoldAlignDetector(); // Create detector
+        goldDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+        goldDetector.useDefaults(); // Set detector to use default settings
+
+        // Optional tuning
+        goldDetector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        goldDetector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        goldDetector.downscale = 0.4; // How much to downscale the input frames
+
+        goldDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+        goldDetector.maxAreaScorer.weight = 0.005; //
+
+        goldDetector.ratioScorer.weight = 5; //
+        goldDetector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+
+        goldDetector.enable();
     }
 }
