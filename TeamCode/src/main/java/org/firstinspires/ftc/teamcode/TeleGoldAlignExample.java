@@ -38,8 +38,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
 @TeleOp(name="TeleGoldAlign Example", group="DogeCV")
-public class TeleGoldAlignExample extends OpMode
-{
+public class TeleGoldAlignExample extends OpMode {
     // Detector object
     private GoldAlignDetector detector;
 
@@ -66,10 +65,7 @@ public class TeleGoldAlignExample extends OpMode
         detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
 
         detector.enable(); // Start the detector!
-
-
     }
-
     /*
      * Code to run REPEATEDLY when the driver hits INIT
      */

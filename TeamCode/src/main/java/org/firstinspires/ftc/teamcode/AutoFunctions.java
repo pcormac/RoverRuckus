@@ -128,7 +128,9 @@ public abstract class AutoFunctions extends LinearOpMode {
 
     String gold;
     boolean goldFound = false;
-    GoldAlignDetector goldDetector;
+    TwoMineralSampleDetector detector;
+    final int viewHeight = 640;
+    final int viewWidth = 480;
 
     public void runOpMode() throws InterruptedException {
         declareMap();
@@ -327,8 +329,8 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         while (((Math.abs(leftMotor.getCurrentPosition()) < (Math.abs(distanceToRun))) && (Math.abs(rightMotor.getCurrentPosition())) < (Math.abs(distanceToRun))) && (opModeIsActive())) {
-            leftMotor.setPower(.25);
-            rightMotor.setPower(.25);
+            leftMotor.setPower(.5);
+            rightMotor.setPower(.5);
             telemetry.addData("Left: ", leftMotor.getCurrentPosition());
             telemetry.addData("Right: ", rightMotor.getCurrentPosition());
             telemetry.update();
@@ -338,6 +340,15 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setPower(0);
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    public void resetEncoders() {
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     public void turnUsingEncoders (String direction, long distanceToTurn) {
         telemetry.addData("AutoStatus: ", "Start of turnUsingEncoders");
@@ -542,38 +553,45 @@ public abstract class AutoFunctions extends LinearOpMode {
     }
     public void checkDogeCVForTime (double time) {
         runtime.reset();
-        while (runtime.seconds() < time && opModeIsActive() && !isStopRequested() && !goldFound) {
-            telemetry.addData("Gold X Pos", goldDetector.getXPosition()); // Gold X position.
-            double cameraMiddle = goldDetector.getAdjustedSize().width / 2;
-            // camera is upside down so the highest x val pixel is on the left not the right
+        int[] scores = {0, 0, 0};
 
-            if (Math.abs(goldDetector.getXPosition() - cameraMiddle) < 100) {
-                gold = "Middle";
-                goldFound = true;
-            } else if (goldDetector.getXPosition() < cameraMiddle) {
-                gold = "Right";
-                goldFound = true;
-            } else {
-                gold = "Left";
-                goldFound = true;
-            }
+        while (runtime.seconds() < time && opModeIsActive() && !isStopRequested()) {
+            String currentOrder = detector.getCurrentOrder().toString().toLowerCase();
+            telemetry.addData("Gold pos", detector.getCurrentOrder());
             telemetry.update();
+
+            if (!currentOrder.equalsIgnoreCase("unknown")) {
+                if (currentOrder.equalsIgnoreCase("left")) {
+                    scores[0] += 1;
+                } else if (currentOrder.equalsIgnoreCase("center")) {
+                    scores[1] += 1;
+                } else {
+                    scores[2] += 1;
+                }
+                telemetry.addData("Left", scores[0]);
+                telemetry.addData("Center", scores[1]);
+                telemetry.addData("Right", scores[2]);
+                telemetry.update();
+            }
         }
 
-        switch (gold) {
-            case "Left":
-                telemetry.addData("Status", "Gold in the middle");
-                break;
-            case "Middle":
-                telemetry.addData("Status", "Gold in the middle");
-                break;
-            case "Right":
-                telemetry.addData("Status", "Gold in the middle");
-                break;
-            default:
-                telemetry.addData("Status", "Gold not found");
-                break;
+        if (scores[0] > scores[1] && scores[0] > scores[2]) {
+            gold = "Left";
+            telemetry.addData("Status", "Gold on the left");
+        } else if (scores[1] > scores[0] && scores[1] > scores[2]) {
+            gold = "Middle";
+            telemetry.addData("Status", "Gold in the middle");
+        } else if (scores[2] > scores[0] && scores[2] > scores[1]){
+            gold = "Right";
+            telemetry.addData("Status", "Gold on the right");
+        } else {
+            gold = "Right";
+            telemetry.addData("Status", "Gold not found, defaulted to right");
         }
+
+        telemetry.addData("Left", scores[0]);
+        telemetry.addData("Center", scores[1]);
+        telemetry.addData("Right", scores[2]);
         telemetry.update();
         sleep(3000);
     }
@@ -619,7 +637,9 @@ public abstract class AutoFunctions extends LinearOpMode {
         float robotY = 0;
         float robotAngle = 0;
 
-        GoldAlignDetector goldDetector;
+        TwoMineralSampleDetector detector;
+        final int viewHeight = 640;
+        final int viewWidth = 480;
     }
     public void declareMap() throws InterruptedException {
         //      Drive motors
@@ -661,22 +681,15 @@ public abstract class AutoFunctions extends LinearOpMode {
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor.setDirection(DcMotor.Direction.FORWARD);
 
-        goldDetector = new GoldAlignDetector(); // Create detector
-        goldDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
-        goldDetector.useDefaults(); // Set detector to use default settings
-
-        // Optional tuning
-        goldDetector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
-        goldDetector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
-        goldDetector.downscale = 0.4; // How much to downscale the input frames
-
-        goldDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
-        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-        goldDetector.maxAreaScorer.weight = 0.005; //
-
-        goldDetector.ratioScorer.weight = 5; //
-        goldDetector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
-
-        goldDetector.enable();
+        detector = new TwoMineralSampleDetector();
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        detector.useDefaults();
+        detector.downscale = 0.4;
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        detector.goldPerfectAreaScorer.weight = 0.01;
+        detector.goldPerfectAreaScorer.weight = 0.01;
+        detector.ratioScorer.weight = 5;
+        detector.ratioScorer.perfectRatio = 1.0;
+        detector.enable();
     }
 }
