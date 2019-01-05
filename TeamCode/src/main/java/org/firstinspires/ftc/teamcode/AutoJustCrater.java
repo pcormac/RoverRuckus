@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Auto: Just Crater", group = "Main")
+@Disabled
 public class AutoJustCrater extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -15,10 +17,6 @@ public class AutoJustCrater extends AutoFunctions {
     public void runOpMode() throws InterruptedException {
         declareMap();
         waitForStart();
-
-        elevator.setPower(1);
-        sleep(250);
-        elevator.setPower(0);
 
         runUsingEncoders(-.5, -.5, 1750);
 

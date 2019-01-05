@@ -3,8 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Auto: Sample Crater", group = "Crater Start")
-public class AutoSampleCrater extends AutoFunctions {
+@Autonomous(name = "Auto: S Depot to My Crater", group = "Depot Start")
+public class AutoSDepotToMyCrater extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
@@ -19,6 +19,7 @@ public class AutoSampleCrater extends AutoFunctions {
         waitForStart();
 
         // get down from lander
+        // test
         moveElevatorUsingEncoder(1, 5600);
         hook.setPower(-1);
         sleep(hookSleepTime);
@@ -27,7 +28,7 @@ public class AutoSampleCrater extends AutoFunctions {
         moveElevatorUsingEncoder(1, 500);
 
         runUsingRTP(400);
-        turnUsingRTP("Left", 1700);
+        turnUsingRTP("Left", 1725);
         runUsingRTP(150);
 
         checkDogeCVForTime(3);
@@ -39,18 +40,22 @@ public class AutoSampleCrater extends AutoFunctions {
         if (gold.equalsIgnoreCase("Center")) {
             turnUsingRTP("Left", 50);
             runBackUsingRTP(2500);
+            turnUsingRTP("Right", 200);
         } else if (gold.equalsIgnoreCase("Right")) {
             turnUsingRTP("Right", 450);
             runBackUsingRTP(1500);
-            turnUsingRTP("Left", 500);
+            turnUsingRTP("Left", 600);
             runBackUsingRTP(1500);
+            turnUsingRTP("Left", 200);
         } else {
             // default to left
+            gold = "Left";
             turnUsingRTP("Left", 400);
             runBackUsingRTP(2000);
-            turnUsingRTP("Right", 600);
+            turnUsingRTP("Right", 800);
             runBackUsingRTP(1500);
         }
+
 
         telemetry.addData("AutoStatus: ", "Dumping marker");
         telemetry.update();
@@ -62,11 +67,33 @@ public class AutoSampleCrater extends AutoFunctions {
             tail.setPosition(tail_UP - (runtime.seconds()/(oldRuntime + 2.0))*(tail_UP - tail_DOWN));
             idle();
         }
-        tail.setPosition(tail_DOWN);
-        sleep(1000);
+        tail.setPosition(tail_UP);
 
+        if (gold.equalsIgnoreCase("Left")) {
+            runUsingRTP(300);
+            turnUsingRTP("Left", 1500);
+            runUsingRTP(300);
+            turnUsingRTP("Right", 350);
+            runUsingRTP(750);
+            turnUsingRTP("Right", 400);
+            runUsingRTP(3750);
+        } else if (gold.equalsIgnoreCase("Center")) {
+            runBackUsingRTP(500);
+            turnUsingRTP("Left", 750);
+            runUsingRTP(900);
+            turnUsingRTP("Right", 250);
+            runUsingRTP(3750);
+        } else if (gold.equalsIgnoreCase("Right")) {
+            turnUsingRTP("Left", 300);
+            runUsingRTP(4000);
+        }
+
+        tail.setPosition(tail_UP);
         telemetry.addData("AutoStatus: ", "Done");
         telemetry.update();
+        detector.disable();
     }
 }
+
+
 

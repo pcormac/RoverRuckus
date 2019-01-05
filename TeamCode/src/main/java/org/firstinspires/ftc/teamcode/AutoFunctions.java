@@ -42,9 +42,11 @@ import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -55,6 +57,7 @@ import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -90,8 +93,11 @@ public abstract class AutoFunctions extends LinearOpMode {
     // Device declarations
     DcMotor leftMotor = null;
     DcMotor rightMotor = null;
-    DcMotor elevator = null;
-    //DcMotor escalator = null;
+    //DcMotor elevator = null;
+    DcMotor leftElevator = null;
+    DcMotor rightElevator = null;
+    DcMotorSimple escalator = null;
+    DcMotorSimple hook = null;
     Servo tail = null;
     Servo gate = null;
     Servo flip = null;
@@ -104,6 +110,7 @@ public abstract class AutoFunctions extends LinearOpMode {
     ColorSensor colorSensor = null;
     //ColorSensor colorSensorCloser = null; // closer to the robot
     ModernRoboticsI2cRangeSensor ultra = null;
+    Rev2mDistanceSensor distance = null;
 
     // Variables to be used for later
     public static final String TAG = "Vuforia VuMark Sample";
@@ -122,6 +129,8 @@ public abstract class AutoFunctions extends LinearOpMode {
     double gate_OPEN   = .5;
     double flip_UP     = -1;
     double flip_DOWN   = .95;
+
+    int hookSleepTime = 1000;
 
     String color;
     String vMark;
@@ -259,33 +268,54 @@ public abstract class AutoFunctions extends LinearOpMode {
     }
     public void elevatorDown() throws InterruptedException {
         sleep(100);
-        elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         while (opModeIsActive() && !isStopRequested() && elevatorTouch.getState()) {
-            elevator.setPower(-1);
+            //elevator.setPower(-1);
+            leftElevator.setPower(-1);
+            rightElevator.setPower(-1);
             idle();
         }
-        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftElevator.setPower(0);
+        rightElevator.setPower(0);
+        leftElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
     }
-    public void moveElevator(double power, long timeToRun) throws InterruptedException {
-        elevator.setPower(power);
+    public void moveElevator(double speed, long timeToRun) throws InterruptedException {
+        leftElevator.setPower(speed);
+        rightElevator.setPower(speed);
+        //elevator.setPower(speed);
         sleep(timeToRun);
-        elevator.setPower(0);
+        leftElevator.setPower(0);
+        rightElevator.setPower(0);
         idle();
     }
     public void moveElevatorUsingEncoder(double speed, long ticks) throws InterruptedException {
-        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftElevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        while (((Math.abs(elevator.getCurrentPosition())) < (Math.abs(ticks))) && !(isStopRequested()) && (opModeIsActive())) {
-            elevator.setPower(speed);
-            telemetry.addData("Elevator: ", elevator.getCurrentPosition());
+        //elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        while (((Math.abs(leftElevator.getCurrentPosition())) < (Math.abs(ticks))) && !(isStopRequested()) && (opModeIsActive())) {
+            leftElevator.setPower(speed);
+            rightElevator.setPower(speed);
+            telemetry.addData("Elevator: ", leftElevator.getCurrentPosition());
             telemetry.addData("Goal: ", ticks);
             telemetry.update();
             idle();
         }
-        elevator.setPower(0);
-        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftElevator.setPower(0);
+        rightElevator.setPower(0);
+        leftElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //elevator.setPower(0);
+        //elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
     public void runForTime(double leftSpeed, double rightSpeed, long timeToRun) throws InterruptedException {
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -329,10 +359,58 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         while (((Math.abs(leftMotor.getCurrentPosition()) < (Math.abs(distanceToRun))) && (Math.abs(rightMotor.getCurrentPosition())) < (Math.abs(distanceToRun))) && (opModeIsActive())) {
-            leftMotor.setPower(.5);
-            rightMotor.setPower(.5);
+            leftMotor.setPower(1);
+            rightMotor.setPower(1);
             telemetry.addData("Left: ", leftMotor.getCurrentPosition());
             telemetry.addData("Right: ", rightMotor.getCurrentPosition());
+            telemetry.update();
+            idle();
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    public void runUsingRTP (long distanceToRun) throws InterruptedException {
+        double speed = .7;
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        leftMotor.setTargetPosition((int)distanceToRun);
+        rightMotor.setTargetPosition((int)distanceToRun);
+        leftMotor.setPower(speed);
+        rightMotor.setPower(speed);
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10) {
+            telemetry.addData("AutoStatus", "Run using RTP");
+            telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), distanceToRun);
+            telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), distanceToRun);
+            telemetry.update();
+            idle();
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    public void runBackUsingRTP (long distanceToRun) throws InterruptedException {
+        double speed = .7;
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        leftMotor.setTargetPosition((int)-distanceToRun);
+        rightMotor.setTargetPosition((int)-distanceToRun);
+        leftMotor.setPower(speed);
+        rightMotor.setPower(speed);
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10) {
+            telemetry.addData("AutoStatus", "Run using RTP");
+            telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), -distanceToRun);
+            telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), -distanceToRun);
             telemetry.update();
             idle();
         }
@@ -344,11 +422,9 @@ public abstract class AutoFunctions extends LinearOpMode {
     public void resetEncoders() {
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     public void turnUsingEncoders (String direction, long distanceToTurn) {
         telemetry.addData("AutoStatus: ", "Start of turnUsingEncoders");
@@ -360,7 +436,7 @@ public abstract class AutoFunctions extends LinearOpMode {
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        double speed = .5;
+        double speed = .65;
 
         if (direction.equals("left") || direction.equals("Left")) {
             while (((Math.abs(leftMotor.getCurrentPosition()) < (Math.abs(distanceToTurn))) && (Math.abs(rightMotor.getCurrentPosition())) < (Math.abs(distanceToTurn))) && (opModeIsActive())) {
@@ -387,6 +463,46 @@ public abstract class AutoFunctions extends LinearOpMode {
                 idle();
             }
         }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    public void turnUsingRTP (String direction, long distanceToTurn) {
+        double speed = .7;
+        telemetry.addData("AutoStatus: ", "Start of turnUsingEncoders");
+        telemetry.update();
+
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        if (direction.equalsIgnoreCase("left")) {
+            leftMotor.setTargetPosition((int)-distanceToTurn);
+            rightMotor.setTargetPosition((int)distanceToTurn);
+
+            leftMotor.setPower(-speed);
+            rightMotor.setPower(speed);
+        } else if (direction.equalsIgnoreCase("right")) {
+            leftMotor.setTargetPosition((int)distanceToTurn);
+            rightMotor.setTargetPosition((int)-distanceToTurn);
+
+            leftMotor.setPower(speed);
+            rightMotor.setPower(-speed);
+        }
+
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && getBatteryVoltage() > 10) {
+            telemetry.addData("AutoStatus", "turning using rtp");
+            telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), distanceToTurn);
+            telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), distanceToTurn);
+            telemetry.addData("Direction", direction);
+            telemetry.update();
+            idle();
+        }
+
         leftMotor.setPower(0);
         rightMotor.setPower(0);
 
@@ -441,6 +557,7 @@ public abstract class AutoFunctions extends LinearOpMode {
         while ((ultra.cmUltrasonic() > distance) && opModeIsActive() && !isStopRequested() && (runtime.seconds() < maxTime)) {
             leftMotor.setPower(.25);
             rightMotor.setPower(.25);
+            idle();
         }
     }
     public void checkVuforia() throws InterruptedException {
@@ -545,11 +662,21 @@ public abstract class AutoFunctions extends LinearOpMode {
     public void spamTelemetry() throws InterruptedException {
         telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
         telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
-        telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
+        telemetry.addData("Lift Encoder", leftElevator.getCurrentPosition());
         //telemetry.addData("Color", color);
         //telemetry.addData("raw ultrasonic", ultra.rawUltrasonic());
         telemetry.addData("Mag: ", !mag.getState());
         telemetry.update();
+    }
+    double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+            }
+        }
+        return result;
     }
     public void checkDogeCVForTime (double time) {
         runtime.reset();
@@ -573,75 +700,31 @@ public abstract class AutoFunctions extends LinearOpMode {
                 telemetry.addData("Right", scores[2]);
                 telemetry.update();
             }
+            idle();
         }
 
         if (scores[0] > scores[1] && scores[0] > scores[2]) {
             gold = "Left";
             telemetry.addData("Status", "Gold on the left");
         } else if (scores[1] > scores[0] && scores[1] > scores[2]) {
-            gold = "Middle";
-            telemetry.addData("Status", "Gold in the middle");
+            gold = "Center";
+            telemetry.addData("Status", "Gold in the center");
         } else if (scores[2] > scores[0] && scores[2] > scores[1]){
             gold = "Right";
             telemetry.addData("Status", "Gold on the right");
         } else {
-            gold = "Right";
-            telemetry.addData("Status", "Gold not found, defaulted to right");
+            gold = "Unknown";
+            telemetry.addData("Status", "Gold not found, default to left");
         }
 
         telemetry.addData("Left", scores[0]);
         telemetry.addData("Center", scores[1]);
         telemetry.addData("Right", scores[2]);
         telemetry.update();
-        sleep(3000);
+        sleep(1000);
     }
-    public void declareDevices() throws InterruptedException {
-        // Device declarations
-        DcMotor leftMotor = null;
-        DcMotor rightMotor = null;
-        DcMotor elevator = null;
-        DcMotor escalator = null;
-
-        Servo tail = null;
-        Servo gate = null;
-        Servo flip = null;
-
-        //TouchSensor escalatorTouch = null;
-        DigitalChannel mag = null;
-        DigitalChannel elevatorTouch = null;
-        //OpticalDistanceSensor odsSensor;
-        //ColorSensor colorSensor = null;
-        //OpticalDistanceSensor sharpIR = null;
-        //ModernRoboticsI2cRangeSensor ultra = null;
-
-        double odsMax;
-        double leftTurn;
-        double rightTurn;
-        boolean odsTurn;
-        boolean odsTurning;
-        String color;
-        String vMark;
-        String gold;
-        boolean vuforiaFound = false;
-        boolean goldFound = false;
-        double jewelUp = .8;
-        double jewelDown = .4;
-
-        // Variables to be used for later
-        final String TAG = "Vuforia VuMark Sample";
-        OpenGLMatrix lastLocation = null;
-        VuforiaLocalizer vuforia;
-        final String VUFORIA_KEY = "AezNI5P/////AAAAGau6WS2ao0KEr5u8BAb3J9lTKExRB45YfNKMCkXuhNSkvqjxenFuSAeL148drmLgkGK+HFayX4nihmiiQ49o3HHT5j/TBwjrVpktUmGQyOjREYq78kQAS1CuQMYa6PKSTLAID+lK/RvJxZ4pqH6H4LgxQBsKaKqzhMr96hwAE2uKKdf1j3gzOyRl0Gsrqv63QiXfJCeJtM1GcuQziKlWv1y6+BcKa+hi31FxvggkMEHVxh7xQ4yAHUvmxQHINOndIE6C6Ltz+ef+7KhCkwmk/QVTPDUafTSuJMPTSp5RxNIK+L+U4kjEMZOFhYP2ubczRypICjcg93tpP73+xvPHyyDIeSoieWvkDdJXhmcKIhrA"; // Insert your own key here
-
-        float robotX = 0;
-        float robotY = 0;
-        float robotAngle = 0;
-
-        TwoMineralSampleDetector detector;
-        final int viewHeight = 640;
-        final int viewWidth = 480;
-    }
-    public void declareMap() throws InterruptedException {
+    public void declareOldMap() throws InterruptedException {
+        /*
         //      Drive motors
         leftMotor = hardwareMap.dcMotor.get("leftMotor");
         rightMotor = hardwareMap.dcMotor.get("rightMotor");
@@ -659,7 +742,7 @@ public abstract class AutoFunctions extends LinearOpMode {
         //      Servo
         tail = hardwareMap.servo.get("tail");
         gate = hardwareMap.servo.get("gate");
-        flip = hardwareMap.servo.get("flip");
+        //flip = hardwareMap.servo.get("flip");
 
         // Sensors
         //     Light sensor
@@ -691,5 +774,119 @@ public abstract class AutoFunctions extends LinearOpMode {
         detector.ratioScorer.weight = 5;
         detector.ratioScorer.perfectRatio = 1.0;
         detector.enable();
+        */
+    }
+    public void declareMap() throws InterruptedException {
+        //      Drive motors
+        leftMotor = hardwareMap.dcMotor.get("leftMotor");
+        rightMotor = hardwareMap.dcMotor.get("rightMotor");
+        // Reverse the motor that runs backwards when connected directly to the battery
+        leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
+        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        //      Elevator motors
+        leftElevator = hardwareMap.dcMotor.get("leftElevator");
+        rightElevator = hardwareMap.dcMotor.get("rightElevator");
+        leftElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //      Hook motor
+        hook = hardwareMap.get(DcMotorSimple.class, "hook");
+        //      Escalator motor
+        escalator = hardwareMap.get(DcMotorSimple.class, "escalator");
+
+        //      Servo
+        tail = hardwareMap.servo.get("tail");
+        gate = hardwareMap.servo.get("gate");
+        flip = hardwareMap.servo.get("flip");
+
+        // Sensors
+        //     Light sensor
+        //odsSensor = hardwareMap.opticalDistanceSensor.get("ods");
+        //     Ultrasonic Sensor
+        //ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
+        //     Touch sensor
+        //escalatorTouch = hardwareMap.touchSensor.get("touchSensor");
+        //     Magnetic limit sensor
+        mag = hardwareMap.get(DigitalChannel.class, "mag");
+        //     Elevator touch
+        elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
+        //     Color sensor
+        //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        //     Ir Sensor
+        //sharpIR = hardwareMap.opticalDistanceSensor.get("infrared");
+        //     Distance Sensor
+        distance = hardwareMap.get(Rev2mDistanceSensor.class, "distance");
+
+        // Reverse the motor that runs backwards when connected directly to the battery
+        leftMotor.setDirection(DcMotor.Direction.REVERSE);
+        rightMotor.setDirection(DcMotor.Direction.FORWARD);
+
+        detector = new TwoMineralSampleDetector();
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        detector.useDefaults();
+        detector.downscale = 0.4;
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        detector.goldPerfectAreaScorer.weight = 0.01;
+        detector.silverPerfectAreaScorer.weight = 0.01;
+        detector.ratioScorer.weight = 5;
+        detector.ratioScorer.perfectRatio = 1.0;
+        detector.enable();
+    }
+    public void declareDevices() throws InterruptedException {
+        ElapsedTime runtime = new ElapsedTime();
+
+        /* Declare OpMode members. */
+
+        // Device declarations
+        DcMotor leftMotor = null;
+        DcMotor rightMotor = null;
+        DcMotor elevator = null;
+        DcMotor leftElevator = null;
+        DcMotor rightElevator = null;
+        DcMotorSimple escalator = null;
+        DcMotorSimple hook = null;
+        Servo tail = null;
+        Servo gate = null;
+        Servo flip = null;
+
+        //TouchSensor escalatorTouch = null;
+        DigitalChannel mag = null;
+        DigitalChannel elevatorTouch = null;
+        OpticalDistanceSensor odsSensor;
+        OpticalDistanceSensor sharpIR = null;
+        ColorSensor colorSensor = null;
+        //ColorSensor colorSensorCloser = null; // closer to the robot
+        ModernRoboticsI2cRangeSensor ultra = null;
+
+        // Variables to be used for later
+        final String TAG = "Vuforia VuMark Sample";
+        OpenGLMatrix lastLocation = null;
+        VuforiaLocalizer vuforia;
+        boolean vuforiaFound = false;
+        final String VUFORIA_KEY = "AezNI5P/////AAAAGau6WS2ao0KEr5u8BAb3J9lTKExRB45YfNKMCkXuhNSkvqjxenFuSAeL148drmLgkGK+HFayX4nihmiiQ49o3HHT5j/TBwjrVpktUmGQyOjREYq78kQAS1CuQMYa6PKSTLAID+lK/RvJxZ4pqH6H4LgxQBsKaKqzhMr96hwAE2uKKdf1j3gzOyRl0Gsrqv63QiXfJCeJtM1GcuQziKlWv1y6+BcKa+hi31FxvggkMEHVxh7xQ4yAHUvmxQHINOndIE6C6Ltz+ef+7KhCkwmk/QVTPDUafTSuJMPTSp5RxNIK+L+U4kjEMZOFhYP2ubczRypICjcg93tpP73+xvPHyyDIeSoieWvkDdJXhmcKIhrA"; // Insert your own key here
+
+        float robotX = 0;
+        float robotY = 0;
+        float robotAngle = 0;
+
+        double tail_UP     = .75;
+        double tail_DOWN   = -.5;
+        double gate_CLOSED = -1;
+        double gate_OPEN   = .5;
+        double flip_UP     = -1;
+        double flip_DOWN   = .95;
+
+        int hookSleepTime = 1000;
+
+        String color;
+        String vMark;
+
+        String gold;
+        boolean goldFound = false;
+        TwoMineralSampleDetector detector;
+        final int viewHeight = 640;
+        final int viewWidth = 480;
     }
 }

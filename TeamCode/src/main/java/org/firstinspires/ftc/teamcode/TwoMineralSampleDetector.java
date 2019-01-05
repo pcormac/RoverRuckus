@@ -225,17 +225,17 @@ public class TwoMineralSampleDetector extends DogeCVDetector {
         // If enough elements are found, compute gold position
         if ((chosenYellowRect != null && chosenWhiteRect.get(0) != null) && chosenYellowRect.y < 500) {
             if (chosenYellowRect.x > chosenWhiteRect.get(0).x) {
-                currentOrder = GoldLocation.CENTER;
+                currentOrder = GoldLocation.RIGHT;
             } else {
-                currentOrder = GoldLocation.LEFT;
+                currentOrder = GoldLocation.CENTER;
             }
         } else if (chosenWhiteRect.get(0) != null && chosenWhiteRect.get(1) != null) {
-            currentOrder = GoldLocation.RIGHT;
+            currentOrder = GoldLocation.LEFT;
         } else if (chosenYellowRect != null && chosenYellowRect.y < 600) {
             if (chosenYellowRect.x > 240) {
-                currentOrder = GoldLocation.CENTER;
+                currentOrder = GoldLocation.RIGHT;
             } else {
-                currentOrder = GoldLocation.LEFT;
+                currentOrder = GoldLocation.CENTER;
             }
         } else {
             currentOrder = GoldLocation.UNKNOWN;

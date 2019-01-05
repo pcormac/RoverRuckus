@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -60,8 +61,11 @@ public class TeleOp7646 extends OpMode {
     // Device declarations
     private DcMotor leftMotor = null;
     private DcMotor rightMotor = null;
-    private DcMotor elevator = null;
-    //private DcMotor escalator = null;
+    private DcMotor leftElevator = null;
+    private DcMotor rightElevator = null;
+    private DcMotorSimple escalator = null;
+    private DcMotorSimple hook = null;
+    //private DcMotorSimple flip = null;
     private Servo tail = null;
     private Servo gate = null;
     private Servo flip = null;
@@ -76,7 +80,7 @@ public class TeleOp7646 extends OpMode {
     private double elevatorPower = 0;
     private double leftElePow = 0;
     private double rightElePow = 0;
-    // double escalatorPower = 0;
+    double escalatorPower = 0;
 
     String color;
 
@@ -86,13 +90,15 @@ public class TeleOp7646 extends OpMode {
     private double gate_OPEN   = .5;
     private double flip_UP     = -1;
     private double flip_DOWN   = .95;
-    private boolean flipped = false;
 
-    private boolean magStop;
     private boolean magMove;
     private boolean magOn;
     double currTime;
     double goalTime = 0;
+
+    private boolean ohNoFound;
+    private boolean wasRB = false;
+    private int ohNoID;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -103,8 +109,10 @@ public class TeleOp7646 extends OpMode {
         // get motors
         leftMotor = hardwareMap.dcMotor.get("leftMotor");
         rightMotor = hardwareMap.dcMotor.get("rightMotor");
-        elevator = hardwareMap.dcMotor.get("elevator");
-        //escalator = hardwareMap.dcMotor.get("escalator");
+        leftElevator = hardwareMap.dcMotor.get("leftElevator");
+        rightElevator = hardwareMap.dcMotor.get("rightElevator");
+        escalator = hardwareMap.get(DcMotorSimple.class, "escalator");
+        hook = hardwareMap.get(DcMotorSimple.class, "hook");
 
         // get servos
         tail = hardwareMap.servo.get("tail");
@@ -114,20 +122,24 @@ public class TeleOp7646 extends OpMode {
         // Reverse the motor that runs backwards when connected directly to the battery
         leftMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         rightMotor.setDirection(DcMotor.Direction.REVERSE);
-        elevator.setDirection(DcMotor.Direction.FORWARD);
+        leftElevator.setDirection(DcMotor.Direction.FORWARD);
+        rightElevator.setDirection(DcMotor.Direction.FORWARD);
         //escalator.setDirection(DcMotor.Direction.REVERSE);
 
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        elevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         elevatorTouch = hardwareMap.get(DigitalChannel.class, "elevatorTouch");
         //escalatorTouch = hardwareMap.touchSensor.get("escalatorTouch");
@@ -139,6 +151,11 @@ public class TeleOp7646 extends OpMode {
         elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
 
         //colorSensor.enableLed(true);
+        int ohNoID = hardwareMap.appContext.getResources().getIdentifier("ohno",   "raw", hardwareMap.appContext.getPackageName());
+        if (ohNoID != 0) {
+            ohNoFound = SoundPlayer.getInstance().preload(hardwareMap.appContext, ohNoID);
+        }
+        telemetry.addData("ohNo resource",   ohNoFound ?   "Found" : "NOT found\n Add ohno.wav to /src/main/res/raw" );
 
         telemetry.addData("Status", "Initialized");
     }
@@ -172,9 +189,9 @@ public class TeleOp7646 extends OpMode {
         Left Stick    = Left drive
         Right Stick   = Right Drive
         A             = Open gate
-        B             =
+        B             = Move Hook Left
         Y             = Drop tail
-        X             =
+        X             = Move Hook Right
         Left Bumper   = .25 speed
         Right Bumper  =
 
@@ -247,24 +264,44 @@ public class TeleOp7646 extends OpMode {
             gate.setPosition(gate_CLOSED);
         }
 
-        //
+        // hook
+        if (gamepad1.b) {
+            hook.setPower(1);
+        } else if (gamepad1.x) {
+            hook.setPower(-1);
+        } else {
+            hook.setPower(0);
+        }
+
+        /*
+        if (gamepad1.right_bumper && !wasRB && ohNoFound) {
+            try {
+                SoundPlayer.getInstance().startPlaying(hardwareMap.appContext, ohNoID);
+                wasRB = !wasRB;
+            } catch (Exception e) {
+                telemetry.addData("Sound", "Failed");
+                telemetry.update();
+            }
+        }
+        */
+
         //
         //        JOY 2
         //
-        //
 
-
-        if (gamepad2.a) {
+        /* Commented out until mag sensors are on new robot
+        if (gamepad2.b) {
             // use mag to go up
             goalTime = currTime + .5;
             elevatorPower = 1;
             magMove = true;
-        } else if (gamepad2.b) {
+        } else if (gamepad2.a) {
             // use mag to go down
             goalTime = currTime + .5;
             elevatorPower = -1;
             magMove = true;
         }
+        */
 
         if (magOn && (currTime > goalTime)) {
             magMove = false;
@@ -273,34 +310,28 @@ public class TeleOp7646 extends OpMode {
 
         // elevator
         if (Math.abs(gamepad2.left_stick_y) > .25) {
-            elevator.setPower(-gamepad2.left_stick_y);
-            //moveElevator(-gamepad2.left_stick_y);
+            moveElevator(-gamepad2.left_stick_y);
+        } else if (gamepad2.dpad_up) {
+            moveElevator(1);
+        } else if (gamepad2.dpad_down) {
+            moveElevator(-1);
         } else if (magMove && elevatorTouch.getState()) {
             // for ele touch true means that it isn't touched
             if (currTime < goalTime) {
-                elevator.setPower(elevatorPower);
-                //moveElevator(elevatorPower);
+                moveElevator(elevatorPower);
             } else if (!magOn){
-                elevator.setPower(elevatorPower);
-                //moveElevator(elevatorPower);
+                moveElevator(elevatorPower);
             }
         } else if (!elevatorTouch.getState()) {
             magMove = false;
             elevatorPower = 0;
-            elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            elevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            elevator.setPower(.5);
-
-            /*
             leftElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             leftElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             rightElevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             rightElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             moveElevator(.5);
-            */
         } else {
-            elevator.setPower(0);
-            //moveElevator(0);
+            moveElevator(0);
         }
 
         // flip
@@ -313,27 +344,36 @@ public class TeleOp7646 extends OpMode {
         }
 
         // escalator
-        // escalatorPower = -gamepad2.left_stick_x;
-        // escalator.setPower(escalatorPower);
+        if (gamepad2.dpad_left) {
+            escalatorPower = -1;
+        } else if (gamepad2.dpad_right) {
+            escalatorPower = 1;
+        } else if (Math.abs(gamepad2.right_stick_y) > .25) {
+            escalatorPower = Range.clip(-gamepad2.right_stick_y, -1.0, 1.0);
+        } else {
+            escalatorPower = 0;
+        }
+        escalator.setPower(escalatorPower);
 
         // end of code, update telemetry
         telemetry.addData("Right", gamepad1.right_stick_y);
         telemetry.addData("Left", gamepad1.left_stick_y);
         telemetry.addData("Slow", gamepad1.left_bumper);
-        telemetry.addData("Elevator", elevator.getPower());
+        telemetry.addData("Elevator", leftElevator.getPower());
         telemetry.addData("Elevator Touch", elevatorTouch.getState());
         telemetry.addData("Left Encoder", leftMotor.getCurrentPosition());
         telemetry.addData("Right Encoder", -rightMotor.getCurrentPosition());
-        telemetry.addData("Lift Encoder", elevator.getCurrentPosition());
+        telemetry.addData("Left Ele Encoder", leftElevator.getCurrentPosition());
+        telemetry.addData("Right Ele Encoder", rightElevator.getCurrentPosition());
         telemetry.addData("Mag", !mag.getState());
         telemetry.update();
     }
 
-    /* placeholder
     public void moveElevator(double initialSpeed) {
         int leftPos = leftElevator.getCurrentPosition();
         int rightPos = rightElevator.getCurrentPosition();
 
+        /*
         if (leftPos - rightPos > 100) {
            leftElePow = .5*initialSpeed;
            rightElePow = initialSpeed;
@@ -344,13 +384,14 @@ public class TeleOp7646 extends OpMode {
             leftElePow = initialSpeed;
             rightElePow = initialSpeed;
         }
-        leftElevator.setPower(leftElePow);
-        rightElevator.setPower(rightElePow);
+        */
+
+        leftElePow = initialSpeed;
+        rightElePow = initialSpeed;
+        leftElevator.setPower(Range.clip(leftElePow, -1.0, 1.0));
+        rightElevator.setPower(Range.clip(rightElePow, -1.0, 1.0));
     }
-    */
 
     @Override
-    public void stop() {
-    }
-
+    public void stop() {}
 }

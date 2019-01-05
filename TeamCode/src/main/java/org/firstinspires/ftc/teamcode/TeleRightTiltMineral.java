@@ -12,16 +12,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.util.ArrayList;
 import java.util.List;
 
-@TeleOp(name="TeleLeftTilt", group="DogeCV")
-public class TeleLeftTiltMineral extends OpMode {
+@TeleOp(name="TeleRightTilt", group="DogeCV")
+public class TeleRightTiltMineral extends OpMode {
 
     private TwoMineralSampleDetector detector;
     private List<String> tempScorerNames = new ArrayList<>();
 
     @Override
     public void init() {
-        telemetry.addData("Status", "DogeCV 2018.0 - Gold Align Example");
-
         detector = new TwoMineralSampleDetector();
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
         detector.useDefaults();

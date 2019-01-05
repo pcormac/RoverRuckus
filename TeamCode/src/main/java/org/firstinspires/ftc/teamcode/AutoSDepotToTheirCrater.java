@@ -3,8 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Auto: Sample Crater", group = "Crater Start")
-public class AutoSampleCrater extends AutoFunctions {
+@Autonomous(name = "Auto: S Depot to Their Crater", group = "Depot Start")
+public class AutoSDepotToTheirCrater extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
@@ -42,15 +42,18 @@ public class AutoSampleCrater extends AutoFunctions {
         } else if (gold.equalsIgnoreCase("Right")) {
             turnUsingRTP("Right", 450);
             runBackUsingRTP(1500);
-            turnUsingRTP("Left", 500);
+            turnUsingRTP("Left", 600);
             runBackUsingRTP(1500);
+            turnUsingRTP("Left", 200);
         } else {
             // default to left
             turnUsingRTP("Left", 400);
             runBackUsingRTP(2000);
             turnUsingRTP("Right", 600);
             runBackUsingRTP(1500);
+            turnUsingRTP("Right", 200);
         }
+
 
         telemetry.addData("AutoStatus: ", "Dumping marker");
         telemetry.update();
@@ -65,8 +68,26 @@ public class AutoSampleCrater extends AutoFunctions {
         tail.setPosition(tail_DOWN);
         sleep(1000);
 
+        moveElevatorUsingEncoder(1, 500);
+
+        if (gold.equalsIgnoreCase("Left")) {
+            turnUsingRTP("Right", 100);
+            runUsingRTP(3750);
+        } else if (gold.equalsIgnoreCase("Center")) {
+            runBackUsingRTP(300);
+            turnUsingRTP("Right", 300);
+            runUsingRTP(3750);
+        } else {
+            turnUsingRTP("Left", 100);
+            runUsingRTP(3500);
+        }
+
+        tail.setPosition(tail_UP);
         telemetry.addData("AutoStatus: ", "Done");
         telemetry.update();
+        detector.disable();
     }
 }
+
+
 

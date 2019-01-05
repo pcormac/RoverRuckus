@@ -18,57 +18,60 @@ public class AutoSampleDepot extends AutoFunctions {
 
         waitForStart();
 
+        // get down from lander
+        moveElevatorUsingEncoder(1, 5600);
+        hook.setPower(-1);
+        sleep(hookSleepTime);
+        hook.setPower(0);
+        elevatorDown();
         moveElevatorUsingEncoder(1, 500);
 
-        checkDogeCVForTime(5);
+        runUsingRTP(400);
+        turnUsingRTP("Left", 1700);
+        runUsingRTP(150);
+
+        checkDogeCVForTime(3);
 
         telemetry.addData("AutoStatus: ", "Starting back up");
         telemetry.update();
+        runBackUsingRTP(250);
 
-        if (gold.equalsIgnoreCase("Left")) {
-            turnUsingEncoders("Left", 80);
-            runUsingEncoders(-.5, -.5,1500);
-            turnUsingEncoders("Right", 250);
-            runUsingEncoders(-.5, -.5,1000);
-        } else if (gold.equalsIgnoreCase("Middle")) {
-            turnUsingEncoders("Right", 35);
-            runUsingEncoders(-.5, -.5,2000);
+        if (gold.equalsIgnoreCase("Center")) {
+            turnUsingRTP("Left", 50);
+            runBackUsingRTP(2500);
         } else if (gold.equalsIgnoreCase("Right")) {
-            turnUsingEncoders("Right", 225);
-            runUsingEncoders(-.5, -.5,1200);
-            turnUsingEncoders("Left", 200);
-            runUsingEncoders(-.5, -.5,1200);
+            turnUsingRTP("Right", 450);
+            runBackUsingRTP(1500);
+            turnUsingRTP("Left", 600);
+            runBackUsingRTP(1500);
+            turnUsingRTP("Left", 200);
         } else {
-            // mineral was not found, default to right
-            turnUsingEncoders("Right", 225);
-            runUsingEncoders(-.5, -.5,1200);
-            turnUsingEncoders("Left", 200);
-            runUsingEncoders(-.5, -.5,1200);
+            // default to left
+            turnUsingRTP("Left", 400);
+            runBackUsingRTP(2000);
+            turnUsingRTP("Right", 600);
+            runBackUsingRTP(1500);
+            turnUsingRTP("Right", 200);
         }
 
 
         telemetry.addData("AutoStatus: ", "Dumping marker");
         telemetry.update();
-        tail.setPosition(tail_DOWN);
-        sleep(500);
 
-        moveElevatorUsingEncoder(1, 500);
-
-        if (gold.equalsIgnoreCase("Left")) {
-            turnUsingEncoders("Right", 100);
-            runUsingEncoders(3500);
-        } else if (gold.equalsIgnoreCase("Middle")) {
-            runUsingEncoders(-.5, -.5, 300);
-            turnUsingEncoders("Right", 300);
-            runUsingEncoders(3750);
-        } else {
-            turnUsingEncoders("Left", 100);
-            runUsingEncoders(3500);
+        double oldRuntime = runtime.seconds();
+        while (runtime.seconds() < (oldRuntime + 2.0)) {
+            // starts the position at tail_UP then takes the progress as a percent of the time it has been running
+            // then multiplies that % by the total difference in position from up to down
+            tail.setPosition(tail_UP - (runtime.seconds()/(oldRuntime + 2.0))*(tail_UP - tail_DOWN));
+            idle();
         }
+        tail.setPosition(tail_DOWN);
+        sleep(1000);
 
         tail.setPosition(tail_UP);
         telemetry.addData("AutoStatus: ", "Done");
         telemetry.update();
+        detector.disable();
     }
 }
 

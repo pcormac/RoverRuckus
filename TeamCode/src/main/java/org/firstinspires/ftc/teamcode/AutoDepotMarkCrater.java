@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Auto: Depot Mark Crater", group = "Depot Start")
+@Disabled
 public class AutoDepotMarkCrater extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -17,12 +19,6 @@ public class AutoDepotMarkCrater extends AutoFunctions {
         declareMap();
 
         waitForStart();
-
-        elevator.setPower(1);
-
-        sleep(500);
-
-        elevator.setPower(0);
 
         telemetry.addData("AutoStatus: ", "Starting back up");
         telemetry.update();

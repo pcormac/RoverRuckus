@@ -19,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 /**
  * Created by Cormac on 12/6/2016.
  */
-@Autonomous(name="Auto: Elevator Down", group="Main")
+@Autonomous(name="Auto: Elevator Down", group="Misc")
 public class AutoElevatorDown extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -35,11 +35,7 @@ public class AutoElevatorDown extends AutoFunctions {
         declareMap();
 
         waitForStart();
-
         elevatorDown();
-
-        elevator.setPower(0);
-
         sleep(250);
 
         telemetry.addData("AutoStatus: ", "Elevator down");
