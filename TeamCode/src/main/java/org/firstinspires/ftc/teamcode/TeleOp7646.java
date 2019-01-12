@@ -35,6 +35,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -52,6 +53,7 @@ import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.ConceptTelemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp(name="TeleOp7646", group="Iterative Opmode")
 public class TeleOp7646 extends OpMode {
@@ -76,6 +78,7 @@ public class TeleOp7646 extends OpMode {
     //ColorSensor colorSensor = null;
     //ColorSensor colorSensorCloser = null;
     //ModernRoboticsI2cRangeSensor ultra = null;
+    Rev2mDistanceSensor distance = null;
 
     private double elevatorPower = 0;
     private double leftElePow = 0;
@@ -85,11 +88,11 @@ public class TeleOp7646 extends OpMode {
     String color;
 
     private double tail_UP     = .75;
-    private double tail_DOWN   = -.5;
-    private double gate_CLOSED = -1;
+    private double tail_DOWN   = 0;
+    private double gate_CLOSED = 0;
     private double gate_OPEN   = .5;
-    private double flip_UP     = -1;
-    private double flip_DOWN   = .95;
+    private double flip_UP     = .05;
+    private double flip_DOWN   = .97;
 
     private boolean magMove;
     private boolean magOn;
@@ -125,6 +128,7 @@ public class TeleOp7646 extends OpMode {
         leftElevator.setDirection(DcMotor.Direction.FORWARD);
         rightElevator.setDirection(DcMotor.Direction.FORWARD);
         //escalator.setDirection(DcMotor.Direction.REVERSE);
+        hook.setDirection(DcMotorSimple.Direction.REVERSE);
 
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -136,8 +140,8 @@ public class TeleOp7646 extends OpMode {
         leftElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightElevator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         leftElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightElevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -146,6 +150,7 @@ public class TeleOp7646 extends OpMode {
         //colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         //colorSensorCloser = hardwareMap.get(ColorSensor.class, "colorSensorCloser");
         //ultra = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "ultra");
+        distance = hardwareMap.get(Rev2mDistanceSensor.class, "distance");
 
         mag = hardwareMap.get(DigitalChannel.class, "mag");
         elevatorTouch.setMode(DigitalChannel.Mode.INPUT);
@@ -366,6 +371,7 @@ public class TeleOp7646 extends OpMode {
         telemetry.addData("Left Ele Encoder", leftElevator.getCurrentPosition());
         telemetry.addData("Right Ele Encoder", rightElevator.getCurrentPosition());
         telemetry.addData("Mag", !mag.getState());
+        telemetry.addData("Distance", "%.01f in", distance.getDistance(DistanceUnit.INCH));
         telemetry.update();
     }
 

@@ -72,6 +72,7 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuMarkInstanceId;
@@ -124,12 +125,11 @@ public abstract class AutoFunctions extends LinearOpMode {
     public float robotAngle = 0;
 
     double tail_UP     = .75;
-    double tail_DOWN   = -.5;
-    double gate_CLOSED = -1;
+    double tail_DOWN   = 0;
+    double gate_CLOSED = 0;
     double gate_OPEN   = .5;
-    double flip_UP     = -1;
-    double flip_DOWN   = .95;
-
+    double flip_UP     = .05;
+    double flip_DOWN   = .97;
     int hookSleepTime = 1000;
 
     String color;
@@ -372,7 +372,7 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
     public void runUsingRTP (long distanceToRun) throws InterruptedException {
-        double speed = .7;
+        double speed = .8;
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -383,10 +383,35 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setTargetPosition((int)distanceToRun);
         leftMotor.setPower(speed);
         rightMotor.setPower(speed);
-        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10) {
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10.5) {
             telemetry.addData("AutoStatus", "Run using RTP");
             telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), distanceToRun);
             telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), distanceToRun);
+            telemetry.addData("Distance", "%.01f in", distance.getDistance(DistanceUnit.INCH));
+            telemetry.update();
+            idle();
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    public void runUsingRTP (long distanceToRun, double speed) throws InterruptedException {
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        leftMotor.setTargetPosition((int)distanceToRun);
+        rightMotor.setTargetPosition((int)distanceToRun);
+        leftMotor.setPower(speed);
+        rightMotor.setPower(speed);
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10.5) {
+            telemetry.addData("AutoStatus", "Run using RTP");
+            telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), distanceToRun);
+            telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), distanceToRun);
+            telemetry.addData("Distance", "%.01f in", distance.getDistance(DistanceUnit.INCH));
             telemetry.update();
             idle();
         }
@@ -396,7 +421,7 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
     public void runBackUsingRTP (long distanceToRun) throws InterruptedException {
-        double speed = .7;
+        double speed = .8;
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -407,10 +432,11 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setTargetPosition((int)-distanceToRun);
         leftMotor.setPower(speed);
         rightMotor.setPower(speed);
-        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10) {
+        while (leftMotor.isBusy() && rightMotor.isBusy() && opModeIsActive() && !isStopRequested() && getBatteryVoltage() > 10.5) {
             telemetry.addData("AutoStatus", "Run using RTP");
             telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), -distanceToRun);
             telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), -distanceToRun);
+            telemetry.addData("Distance", "%.01f in", distance.getDistance(DistanceUnit.INCH));
             telemetry.update();
             idle();
         }
@@ -470,7 +496,12 @@ public abstract class AutoFunctions extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
     public void turnUsingRTP (String direction, long distanceToTurn) {
-        double speed = .7;
+        double speed;
+        if (distanceToTurn > 250) {
+            speed = .75;
+        } else {
+            speed = 1;
+        }
         telemetry.addData("AutoStatus: ", "Start of turnUsingEncoders");
         telemetry.update();
 
@@ -499,6 +530,7 @@ public abstract class AutoFunctions extends LinearOpMode {
             telemetry.addData("LeftMotor", "%7d of %7d", leftMotor.getCurrentPosition(), distanceToTurn);
             telemetry.addData("RightMotor", "%7d of %7d", rightMotor.getCurrentPosition(), distanceToTurn);
             telemetry.addData("Direction", direction);
+            telemetry.addData("Distance", "%.01f in", distance.getDistance(DistanceUnit.INCH));
             telemetry.update();
             idle();
         }
@@ -684,8 +716,6 @@ public abstract class AutoFunctions extends LinearOpMode {
 
         while (runtime.seconds() < time && opModeIsActive() && !isStopRequested()) {
             String currentOrder = detector.getCurrentOrder().toString().toLowerCase();
-            telemetry.addData("Gold pos", detector.getCurrentOrder());
-            telemetry.update();
 
             if (!currentOrder.equalsIgnoreCase("unknown")) {
                 if (currentOrder.equalsIgnoreCase("left")) {
@@ -695,21 +725,23 @@ public abstract class AutoFunctions extends LinearOpMode {
                 } else {
                     scores[2] += 1;
                 }
-                telemetry.addData("Left", scores[0]);
-                telemetry.addData("Center", scores[1]);
-                telemetry.addData("Right", scores[2]);
-                telemetry.update();
+
             }
+            telemetry.addData("Gold pos", detector.getCurrentOrder());
+            telemetry.addData("Left", scores[0]);
+            telemetry.addData("Center", scores[1]);
+            telemetry.addData("Right", scores[2]);
+            telemetry.update();
             idle();
         }
 
-        if (scores[0] > scores[1] && scores[0] > scores[2]) {
+        if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > 500) {
             gold = "Left";
             telemetry.addData("Status", "Gold on the left");
-        } else if (scores[1] > scores[0] && scores[1] > scores[2]) {
+        } else if (scores[1] > scores[0] && scores[1] > scores[2] && scores[1] > 500) {
             gold = "Center";
             telemetry.addData("Status", "Gold in the center");
-        } else if (scores[2] > scores[0] && scores[2] > scores[1]){
+        } else if (scores[2] > scores[0] && scores[2] > scores[1] && scores[2] > 500){
             gold = "Right";
             telemetry.addData("Status", "Gold on the right");
         } else {
@@ -721,7 +753,6 @@ public abstract class AutoFunctions extends LinearOpMode {
         telemetry.addData("Center", scores[1]);
         telemetry.addData("Right", scores[2]);
         telemetry.update();
-        sleep(1000);
     }
     public void declareOldMap() throws InterruptedException {
         /*
@@ -873,10 +904,10 @@ public abstract class AutoFunctions extends LinearOpMode {
 
         double tail_UP     = .75;
         double tail_DOWN   = -.5;
-        double gate_CLOSED = -1;
+        double gate_CLOSED = 0;
         double gate_OPEN   = .5;
-        double flip_UP     = -1;
-        double flip_DOWN   = .95;
+        double flip_UP     = .05;
+        double flip_DOWN   = .97;
 
         int hookSleepTime = 1000;
 

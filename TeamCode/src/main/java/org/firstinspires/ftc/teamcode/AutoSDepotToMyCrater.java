@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 @Autonomous(name = "Auto: S Depot to My Crater", group = "Depot Start")
 public class AutoSDepotToMyCrater extends AutoFunctions {
     private ElapsedTime runtime = new ElapsedTime();
@@ -19,8 +21,7 @@ public class AutoSDepotToMyCrater extends AutoFunctions {
         waitForStart();
 
         // get down from lander
-        // test
-        moveElevatorUsingEncoder(1, 5600);
+        moveElevatorUsingEncoder(1, 5700);
         hook.setPower(-1);
         sleep(hookSleepTime);
         hook.setPower(0);
@@ -28,7 +29,7 @@ public class AutoSDepotToMyCrater extends AutoFunctions {
         moveElevatorUsingEncoder(1, 500);
 
         runUsingRTP(400);
-        turnUsingRTP("Left", 1725);
+        turnUsingRTP("Left", 1715);
         runUsingRTP(150);
 
         checkDogeCVForTime(3);
@@ -38,11 +39,11 @@ public class AutoSDepotToMyCrater extends AutoFunctions {
         runBackUsingRTP(250);
 
         if (gold.equalsIgnoreCase("Center")) {
-            turnUsingRTP("Left", 50);
+            turnUsingRTP("Left", 100);
             runBackUsingRTP(2500);
-            turnUsingRTP("Right", 200);
+            turnUsingRTP("Right", 150);
         } else if (gold.equalsIgnoreCase("Right")) {
-            turnUsingRTP("Right", 450);
+            turnUsingRTP("Right", 425);
             runBackUsingRTP(1500);
             turnUsingRTP("Left", 600);
             runBackUsingRTP(1500);
@@ -56,7 +57,6 @@ public class AutoSDepotToMyCrater extends AutoFunctions {
             runBackUsingRTP(1500);
         }
 
-
         telemetry.addData("AutoStatus: ", "Dumping marker");
         telemetry.update();
 
@@ -64,29 +64,36 @@ public class AutoSDepotToMyCrater extends AutoFunctions {
         while (runtime.seconds() < (oldRuntime + 2.0)) {
             // starts the position at tail_UP then takes the progress as a percent of the time it has been running
             // then multiplies that % by the total difference in position from up to down
-            tail.setPosition(tail_UP - (runtime.seconds()/(oldRuntime + 2.0))*(tail_UP - tail_DOWN));
+            tail.setPosition(tail_UP - ((runtime.seconds() - oldRuntime)/(2.0))*(tail_UP - tail_DOWN));
             idle();
         }
         tail.setPosition(tail_UP);
 
         if (gold.equalsIgnoreCase("Left")) {
             runUsingRTP(300);
-            turnUsingRTP("Left", 1500);
-            runUsingRTP(300);
-            turnUsingRTP("Right", 350);
-            runUsingRTP(750);
-            turnUsingRTP("Right", 400);
-            runUsingRTP(3750);
+            turnUsingRTP("Left", 1400);
+            runUsingRTP(700);
+            turnUsingRTP("Right", 300);
+            runUsingRTP(700);
+            turnUsingRTP("Right", 225);
+            runUsingRTP(2500, 1);
         } else if (gold.equalsIgnoreCase("Center")) {
             runBackUsingRTP(500);
             turnUsingRTP("Left", 750);
-            runUsingRTP(900);
-            turnUsingRTP("Right", 250);
-            runUsingRTP(3750);
+            runUsingRTP(1000);
+            turnUsingRTP("Right", 225);
+            runUsingRTP(2500, 1);
         } else if (gold.equalsIgnoreCase("Right")) {
-            turnUsingRTP("Left", 300);
-            runUsingRTP(4000);
+            turnUsingRTP("Left", 250);
+            runUsingRTP(3000, 1);
         }
+
+        if ((distance.getDistance(DistanceUnit.INCH) < 20) && (distance.getDistance(DistanceUnit.INCH) > 7)) {
+            turnUsingRTP("Left", 200);
+        } else if ((distance.getDistance(DistanceUnit.INCH) < 20) && (distance.getDistance(DistanceUnit.INCH) > 5)) {
+            turnUsingRTP("Left", 100);
+        }
+        runUsingRTP(1000);
 
         tail.setPosition(tail_UP);
         telemetry.addData("AutoStatus: ", "Done");

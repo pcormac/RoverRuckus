@@ -19,7 +19,7 @@ public class AutoSDepotToTheirCrater extends AutoFunctions {
         waitForStart();
 
         // get down from lander
-        moveElevatorUsingEncoder(1, 5600);
+        moveElevatorUsingEncoder(1, 5700);
         hook.setPower(-1);
         sleep(hookSleepTime);
         hook.setPower(0);
@@ -66,20 +66,26 @@ public class AutoSDepotToTheirCrater extends AutoFunctions {
             idle();
         }
         tail.setPosition(tail_DOWN);
-        sleep(1000);
 
         moveElevatorUsingEncoder(1, 500);
 
         if (gold.equalsIgnoreCase("Left")) {
-            turnUsingRTP("Right", 100);
-            runUsingRTP(3750);
+            turnUsingRTP("Right", 250);
+            runUsingRTP(3000);
         } else if (gold.equalsIgnoreCase("Center")) {
-            runBackUsingRTP(300);
-            turnUsingRTP("Right", 300);
-            runUsingRTP(3750);
-        } else {
-            turnUsingRTP("Left", 100);
-            runUsingRTP(3500);
+            runBackUsingRTP(500);
+            turnUsingRTP("Right", 750);
+            runUsingRTP(1000);
+            turnUsingRTP("Left", 225);
+            runUsingRTP(2500);
+        } else if (gold.equalsIgnoreCase("Right")) {
+            runUsingRTP(300);
+            turnUsingRTP("Right", 1400);
+            runUsingRTP(700);
+            turnUsingRTP("Left", 300);
+            runUsingRTP(700);
+            turnUsingRTP("Left", 225);
+            runUsingRTP(3000);
         }
 
         tail.setPosition(tail_UP);

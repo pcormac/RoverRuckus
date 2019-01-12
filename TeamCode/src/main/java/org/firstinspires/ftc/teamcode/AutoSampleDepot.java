@@ -19,7 +19,7 @@ public class AutoSampleDepot extends AutoFunctions {
         waitForStart();
 
         // get down from lander
-        moveElevatorUsingEncoder(1, 5600);
+        moveElevatorUsingEncoder(1, 5700);
         hook.setPower(-1);
         sleep(hookSleepTime);
         hook.setPower(0);

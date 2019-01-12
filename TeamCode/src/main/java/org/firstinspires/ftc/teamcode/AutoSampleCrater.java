@@ -14,12 +14,8 @@ public class AutoSampleCrater extends AutoFunctions {
 
     public void runOpMode() throws InterruptedException {
 
-        declareMap();
-
-        waitForStart();
-
         // get down from lander
-        moveElevatorUsingEncoder(1, 5600);
+        moveElevatorUsingEncoder(1, 5700);
         hook.setPower(-1);
         sleep(hookSleepTime);
         hook.setPower(0);
@@ -27,7 +23,7 @@ public class AutoSampleCrater extends AutoFunctions {
         moveElevatorUsingEncoder(1, 500);
 
         runUsingRTP(400);
-        turnUsingRTP("Left", 1700);
+        turnUsingRTP("Left", 1715);
         runUsingRTP(150);
 
         checkDogeCVForTime(3);
@@ -37,33 +33,21 @@ public class AutoSampleCrater extends AutoFunctions {
         runBackUsingRTP(250);
 
         if (gold.equalsIgnoreCase("Center")) {
-            turnUsingRTP("Left", 50);
+            turnUsingRTP("Left", 100);
             runBackUsingRTP(2500);
         } else if (gold.equalsIgnoreCase("Right")) {
-            turnUsingRTP("Right", 450);
+            turnUsingRTP("Right", 425);
             runBackUsingRTP(1500);
-            turnUsingRTP("Left", 500);
+            turnUsingRTP("Left", 600);
             runBackUsingRTP(1500);
         } else {
             // default to left
+            gold = "Left";
             turnUsingRTP("Left", 400);
             runBackUsingRTP(2000);
-            turnUsingRTP("Right", 600);
+            turnUsingRTP("Right", 800);
             runBackUsingRTP(1500);
         }
-
-        telemetry.addData("AutoStatus: ", "Dumping marker");
-        telemetry.update();
-
-        double oldRuntime = runtime.seconds();
-        while (runtime.seconds() < (oldRuntime + 2.0)) {
-            // starts the position at tail_UP then takes the progress as a percent of the time it has been running
-            // then multiplies that % by the total difference in position from up to down
-            tail.setPosition(tail_UP - (runtime.seconds()/(oldRuntime + 2.0))*(tail_UP - tail_DOWN));
-            idle();
-        }
-        tail.setPosition(tail_DOWN);
-        sleep(1000);
 
         telemetry.addData("AutoStatus: ", "Done");
         telemetry.update();

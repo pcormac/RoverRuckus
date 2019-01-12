@@ -24,7 +24,7 @@ public class AutoReset extends AutoFunctions {
 
         runtime.reset();
 
-        while (opModeIsActive() && !isStopRequested() && runtime.seconds() < ((hookSleepTime / 1000) + .2)) {
+        while (opModeIsActive() && !isStopRequested() && runtime.seconds() < ((hookSleepTime / 1000) + .05)) {
             if (elevatorTouch.getState()) {
                 leftElevator.setPower(-1);
                 rightElevator.setPower(-1);
